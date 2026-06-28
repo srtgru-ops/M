@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة تحليل الأداء — مركز محترف</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --navy: #0f1e3c;
+      --navy-2: #142a55;
+      --navy-3: #1d3c75;
+      --gold: #d4a843;
+      --gold-2: #f0ca68;
+      --teal: #1a7f8e;
+      --red: #c0392b;
+      --green: #27ae60;
+      --panel: rgba(255,255,255,0.078);
+      --panel-2: rgba(255,255,255,0.12);
+      --border: rgba(255,255,255,0.16);
+      --text: #ffffff;
+      --muted: #b9c7dc;
+      --soft: #f5f6fa;
+      --shadow: 0 22px 55px rgba(0,0,0,0.25);
+      --radius: 22px;
+    }
+
+    body.light-mode {
+      --navy: #f5f6fa;
+      --navy-2: #ffffff;
+      --navy-3: #edf1f8;
+      --panel: #ffffff;
+      --panel-2: #f7f8fb;
+      --border: #dfe5ef;
+      --text: #0f1e3c;
+      --muted: #53657d;
+      --shadow: 0 18px 45px rgba(15,30,60,0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(212,168,67,0.22), transparent 28%),
+        radial-gradient(circle at 90% 5%, rgba(26,127,142,0.20), transparent 32%),
+        linear-gradient(135deg, var(--navy) 0%, #081124 100%);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    body.light-mode {
+      background:
+        radial-gradient(circle at 10% 0%, rgba(212,168,67,0.18), transparent 28%),
+        radial-gradient(circle at 90% 5%, rgba(26,127,142,0.13), transparent 32%),
+        linear-gradient(135deg, #f5f6fa 0%, #e9eef7 100%);
+    }
+
+    .container {
+      width: min(1520px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 26px 0 42px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 34px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035));
+      box-shadow: var(--shadow);
+    }
+
+    body.light-mode .hero {
+      background: linear-gradient(135deg, #ffffff, #f8fafc);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset-inline-start: -80px;
+      inset-block-start: -110px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(212,168,67,0.16);
+      filter: blur(4px);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 3.2vw, 48px);
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      line-height: 1.25;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 18px;
+      direction: ltr;
+      text-align: right;
+    }
+
+    .date-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      margin-top: 18px;
+      border-radius: 999px;
+      background: rgba(212,168,67,0.13);
+      border: 1px solid rgba(212,168,67,0.35);
+      color: var(--gold-2);
+      font-weight: 800;
+    }
+
+    body.light-mode .date-pill {
+      color: #8b6717;
+      background: rgba(212,168,67,0.15);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .2s ease, background .2s ease, border .2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      background: var(--panel-2);
+      border-color: rgba(212,168,67,0.45);
+    }
+
+    .filters {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: 22px 0;
+      padding: 16px;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      background: rgba(15,30,60,0.82);
+      box-shadow: 0 16px 45px rgba(0,0,0,0.16);
+      backdrop-filter: blur(18px);
+    }
+
+    body.light-mode .filters {
+      background: rgba(255,255,255,0.87);
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .filter-card {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 18px;
+      padding: 14px;
+      min-height: 86px;
+    }
+
+    .filter-label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .year-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .check-pill {
+      position: relative;
+    }
+
+    .check-pill input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .check-pill span {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-width: 70px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: rgba(255,255,255,0.055);
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+      transition: .2s ease;
+    }
+
+    .check-pill input:checked + span {
+      background: linear-gradient(135deg, var(--gold), #f0ca68);
+      color: #17213d;
+      border-color: transparent;
+      box-shadow: 0 9px 20px rgba(212,168,67,0.25);
+    }
+
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-weight: 800;
+      color: var(--text);
+      background: rgba(255,255,255,0.065);
+      outline: none;
+    }
+
+    body.light-mode select {
+      background: #fff;
+    }
+
+    option {
+      color: #0f1e3c;
+      background: #fff;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(170px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .kpi {
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.035));
+      box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+      min-height: 142px;
+    }
+
+    body.light-mode .kpi {
+      background: #ffffff;
+    }
+
+    .kpi::before {
+      content: "";
+      position: absolute;
+      inset-inline-start: 0;
+      top: 0;
+      height: 5px;
+      width: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--teal));
+      opacity: .9;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+      min-height: 36px;
+    }
+
+    .kpi-value {
+      margin-top: 8px;
+      font-size: clamp(19px, 1.7vw, 28px);
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      direction: rtl;
+      overflow-wrap: anywhere;
+    }
+
+    .kpi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 13px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      background: rgba(255,255,255,0.08);
+      color: var(--muted);
+    }
+
+    .positive {
+      color: #58d98d !important;
+    }
+
+    .negative {
+      color: #ff7970 !important;
+    }
+
+    body.light-mode .positive {
+      color: var(--green) !important;
+    }
+
+    body.light-mode .negative {
+      color: var(--red) !important;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .chart-card {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.035));
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.13);
+      overflow: hidden;
+    }
+
+    body.light-mode .chart-card {
+      background: #ffffff;
+    }
+
+    .chart-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .chart-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .chart-index {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      color: #16233b;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      font-weight: 900;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      height: 365px;
+    }
+
+    .canvas-wrap.tall {
+      height: 480px;
+    }
+
+    .insight-caption {
+      margin: 12px 0 0;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    .heatmap-wrap {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    table.heatmap {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 7px;
+      min-width: 720px;
+    }
+
+    table.heatmap th,
+    table.heatmap td {
+      padding: 11px 12px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 900;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.heatmap th {
+      color: var(--gold-2);
+      background: rgba(255,255,255,0.07);
+    }
+
+    body.light-mode table.heatmap th {
+      color: #8b6717;
+    }
+
+    table.heatmap td:first-child,
+    table.heatmap th:first-child {
+      text-align: right;
+      position: sticky;
+      right: 0;
+      z-index: 2;
+      background: var(--navy-2);
+    }
+
+    body.light-mode table.heatmap td:first-child,
+    body.light-mode table.heatmap th:first-child {
+      background: #f7f9fd;
+    }
+
+    .insights-panel {
+      margin-top: 18px;
+      border: 1px solid rgba(212,168,67,0.32);
+      background:
+        linear-gradient(135deg, rgba(212,168,67,0.13), transparent 42%),
+        linear-gradient(180deg, var(--panel), rgba(255,255,255,0.035));
+      border-radius: 26px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    body.light-mode .insights-panel {
+      background: #ffffff;
+    }
+
+    .insights-panel h2 {
+      margin: 0 0 14px;
+      font-weight: 900;
+      font-size: 24px;
+    }
+
+    .insights-list {
+      margin: 0;
+      padding: 0 22px 0 0;
+      display: grid;
+      gap: 10px;
+      color: var(--text);
+      font-weight: 700;
+      line-height: 1.8;
+    }
+
+    .insights-list li::marker {
+      color: var(--gold);
+    }
+
+    .data-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .empty-state {
+      display: grid;
+      place-items: center;
+      min-height: 180px;
+      color: var(--muted);
+      font-weight: 800;
+      border: 1px dashed var(--border);
+      border-radius: 18px;
+    }
+
+    @media (max-width: 1180px) {
+      .kpis {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 840px) {
+      .container {
+        width: min(100% - 20px, 1520px);
+        padding-top: 14px;
+      }
+      .hero {
+        padding: 22px;
+        border-radius: 24px;
+      }
+      .hero-content {
+        grid-template-columns: 1fr;
+      }
+      .hero-actions {
+        justify-content: flex-start;
+      }
+      .kpis {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .chart-card.wide {
+        grid-column: auto;
+      }
+      .canvas-wrap,
+      .canvas-wrap.tall {
+        height: 340px;
+      }
+      .filters {
+        top: 8px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpis {
+        grid-template-columns: 1fr;
+      }
+      .check-pill span {
+        min-width: 64px;
+      }
+    }
+
+    @media print {
+      .filters, .hero-actions {
+        display: none;
+      }
+      body {
+        background: #fff;
+        color: #111;
+      }
+      .chart-card, .kpi, .hero, .insights-panel {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <div class="hero-content">
+        <div>
+          <h1>لوحة تحليل الأداء — مركز محترف</h1>
+          <p class="subtitle">Performance Analytics Dashboard</p>
+          <span class="date-pill">النطاق الزمني: 2023–2026</span>
+        </div>
+        <div class="hero-actions">
+          <button class="btn" id="themeToggle" type="button">الوضع الفاتح</button>
+          <button class="btn" id="printBtn" type="button">طباعة / PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="filters" aria-label="فلاتر لوحة البيانات">
+      <div class="filters-grid">
+        <div class="filter-card">
+          <span class="filter-label">فلتر السنة</span>
+          <div class="year-options">
+            <label class="check-pill"><input type="checkbox" id="yearAll" checked><span>الكل</span></label>
+            <label class="check-pill"><input type="checkbox" class="year-check" value="2023"><span>2023</span></label>
+            <label class="check-pill"><input type="checkbox" class="year-check" value="2024"><span>2024</span></label>
+            <label class="check-pill"><input type="checkbox" class="year-check" value="2025"><span>2025</span></label>
+            <label class="check-pill"><input type="checkbox" class="year-check" value="2026"><span>2026</span></label>
+          </div>
+        </div>
+
+        <div class="filter-card">
+          <label class="filter-label" for="categoryFilter">فئة البرنامج</label>
+          <select id="categoryFilter">
+            <option value="all">كل الفئات</option>
+          </select>
+        </div>
+
+        <div class="filter-card">
+          <label class="filter-label" for="examFilter">نوع رسوم الاختبار الدولي</label>
+          <select id="examFilter">
+            <option value="all">الكل</option>
+            <option value="شامل">شامل</option>
+            <option value="غير شامل">غير شامل</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="kpis" id="kpiGrid"></section>
+
+    <section class="charts-grid">
+      <article class="chart-card">
+        <div class="chart-header"><h3 class="chart-title">الإيرادات والمصروفات السنوية</h3><span class="chart-index">1</span></div>
+        <div class="canvas-wrap"><canvas id="chartAnnual"></canvas></div>
+        <p class="insight-caption" id="capAnnual"></p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-header"><h3 class="chart-title">توزيع الإيرادات حسب فئة البرنامج</h3><span class="chart-index">2</span></div>
+        <div class="canvas-wrap"><canvas id="chartCategory"></canvas></div>
+        <p class="insight-caption" id="capCategory"></p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-header"><h3 class="chart-title">أعلى 10 برامج من حيث الإيراد</h3><span class="chart-index">3</span></div>
+        <div class="canvas-wrap tall"><canvas id="chartTopRevenue"></canvas></div>
+        <p class="insight-caption" id="capTopRevenue"></p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-header"><h3 class="chart-title">تطور التسجيل السنوي</h3><span class="chart-index">4</span></div>
+        <div class="canvas-wrap"><canvas id="chartEnrollment"></canvas></div>
+        <p class="insight-caption" id="capEnrollment"></p>
+      </article>
+
+      <article class="chart-card wide">
+        <div class="chart-header"><h3 class="chart-title">هامش الربح لكل برنامج</h3><span class="chart-index">5</span></div>
+        <div class="canvas-wrap tall"><canvas id="chartProfitByProgram"></canvas></div>
+        <p class="insight-caption" id="capProfitByProgram"></p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-header"><h3 class="chart-title">مقارنة البرامج الشاملة وغير الشاملة</h3><span class="chart-index">6</span></div>
+        <div class="canvas-wrap"><canvas id="chartExamCompare"></canvas></div>
+        <p class="insight-caption" id="capExamCompare"></p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-header"><h3 class="chart-title">نسبة البرامج الرابحة مقابل الخاسرة</h3><span class="chart-index">7</span></div>
+        <div class="canvas-wrap"><canvas id="chartWinLoss"></canvas></div>
+        <p class="insight-caption" id="capWinLoss"></p>
+      </article>
+
+      <article class="chart-card wide">
+        <div class="chart-header"><h3 class="chart-title">الإيرادات حسب البرنامج والسنة</h3><span class="chart-index">8</span></div>
+        <div id="heatmapTable" class="heatmap-wrap"></div>
+        <p class="insight-caption" id="capHeatmap"></p>
+      </article>
+
+      <article class="chart-card wide">
+        <div class="chart-header"><h3 class="chart-title">نمو الإيرادات السنوي بالنسبة المئوية</h3><span class="chart-index">9</span></div>
+        <div class="canvas-wrap"><canvas id="chartGrowth"></canvas></div>
+        <p class="insight-caption" id="capGrowth"></p>
+      </article>
+
+      <article class="chart-card wide">
+        <div class="chart-header"><h3 class="chart-title">أبطال وتحديات الربحية</h3><span class="chart-index">10</span></div>
+        <div class="canvas-wrap"><canvas id="chartBestWorst"></canvas></div>
+        <p class="insight-caption" id="capBestWorst"></p>
+      </article>
+    </section>
+
+    <section class="insights-panel">
+      <h2>الرؤى والتوصيات الرئيسية</h2>
+      <ul class="insights-list" id="insightsList"></ul>
+      <p class="data-note" id="dataNote"></p>
+    </section>
+  </main>
+
+  <script>
+    const RAW_DATA = [
+      {name:"OSHA", code:"OSHA", category:"سلامة مهنية", year:2023, paidStudents:129, freeStudents:0, examType:"شامل", revenue:98191.26, expenses:43730.96, profit:54460.30, admin:false},
+      {name:"IFCE2", code:"IFCE2", category:"تأمين", year:2023, paidStudents:0, freeStudents:15, examType:"غير شامل", revenue:1695.64, expenses:5000, profit:-3304.36, admin:false},
+      {name:"NEBOSH-IGC", code:"NEBOSH-IGC", category:"سلامة مهنية", year:2023, paidStudents:33, freeStudents:0, examType:"شامل", revenue:64812.61, expenses:18195.30, profit:46617.31, admin:false},
+      {name:"CISCO-CCNA", code:"CISCO-CCNA", category:"تقنية معلومات", year:2023, paidStudents:11, freeStudents:0, examType:"غير شامل", revenue:16506.10, expenses:9750, profit:6756.10, admin:false},
+      {name:"SOCPA", code:"SOCPA", category:"إدارة أعمال", year:2023, paidStudents:0, freeStudents:0, examType:"غير شامل", revenue:558.73, expenses:0, profit:558.73, admin:false},
+      {name:"CBP-M", code:"CBP-M", category:"تسويق", year:2023, paidStudents:19, freeStudents:0, examType:"شامل", revenue:35318.25, expenses:8000, profit:27318.25, admin:false},
+      {name:"CBP-CT", code:"CBP-CT", category:"تقنية معلومات", year:2023, paidStudents:29, freeStudents:0, examType:"شامل", revenue:46106.93, expenses:6000, profit:40106.93, admin:false},
+      {name:"COMPTIA NETWORK", code:"COMPTIA NETWORK", category:"تقنية معلومات", year:2023, paidStudents:48, freeStudents:0, examType:"غير شامل", revenue:16477.59, expenses:19200, profit:-2722.41, admin:false},
+      {name:"CBP-LS", code:"CBP-LS", category:"إدارة أعمال", year:2023, paidStudents:44, freeStudents:0, examType:"شامل", revenue:70290.20, expenses:36564.50, profit:33725.70, admin:false},
+      {name:"CBP-PM", code:"CBP-PM", category:"إدارة مشاريع", year:2023, paidStudents:43, freeStudents:0, examType:"شامل", revenue:69389.57, expenses:8000, profit:61389.57, admin:false},
+      {name:"COMPTIA A+", code:"COMPTIA A+", category:"تقنية معلومات", year:2023, paidStudents:0, freeStudents:89, examType:"غير شامل", revenue:0, expenses:12000, profit:-12000, admin:false},
+      {name:"CAPM", code:"CAPM", category:"إدارة مشاريع", year:2023, paidStudents:35, freeStudents:0, examType:"شامل", revenue:12174.04, expenses:4000, profit:8174.04, admin:false},
+      {name:"اكواد الطلاب", code:"ADMIN-CODES-2023", category:"إداري", year:2023, paidStudents:0, freeStudents:0, examType:"—", revenue:0, expenses:25594.30, profit:-25594.30, admin:true},
+      {name:"تقديم دورات مجانية", code:"ADMIN-FREE-COURSES-2023", category:"إداري", year:2023, paidStudents:0, freeStudents:0, examType:"—", revenue:0, expenses:24000, profit:-24000, admin:true},
+
+      {name:"OSHA", code:"OSHA", category:"سلامة مهنية", year:2024, paidStudents:58, freeStudents:0, examType:"شامل", revenue:73729.61, expenses:15968, profit:57761.61, admin:false},
+      {name:"SOCPA", code:"SOCPA", category:"محاسبة", year:2024, paidStudents:16, freeStudents:0, examType:"غير شامل", revenue:17913.10, expenses:14250, profit:3663.10, admin:false},
+      {name:"CBP-PM", code:"CBP-PM", category:"إدارة مشاريع", year:2024, paidStudents:40, freeStudents:0, examType:"شامل", revenue:90658.22, expenses:10000, profit:80658.22, admin:false},
+      {name:"NEBOSH-HAS", code:"NEBOSH-HAS", category:"سلامة مهنية", year:2024, paidStudents:14, freeStudents:0, examType:"شامل", revenue:29519.96, expenses:49300, profit:-19780.04, admin:false},
+      {name:"COMPTIA SECURITY", code:"COMPTIA SECURITY", category:"تقنية معلومات", year:2024, paidStudents:22, freeStudents:3, examType:"غير شامل", revenue:22613.92, expenses:11500, profit:11113.92, admin:false},
+      {name:"CBP-LS", code:"CBP-LS", category:"إدارة أعمال", year:2024, paidStudents:25, freeStudents:0, examType:"شامل", revenue:23194.75, expenses:10000, profit:13194.75, admin:false},
+      {name:"CBP-CT", code:"CBP-CT", category:"تقنية معلومات", year:2024, paidStudents:5, freeStudents:0, examType:"شامل", revenue:21506.46, expenses:6000, profit:15506.46, admin:false},
+      {name:"MOS", code:"MOS", category:"إدارة أعمال", year:2024, paidStudents:1, freeStudents:0, examType:"غير شامل", revenue:11252.15, expenses:0, profit:11252.15, admin:false},
+      {name:"GD", code:"GD", category:"تقنية معلومات", year:2024, paidStudents:1, freeStudents:0, examType:"غير شامل", revenue:1739.11, expenses:0, profit:1739.11, admin:false},
+      {name:"FE", code:"FE", category:"هندسة", year:2024, paidStudents:9, freeStudents:0, examType:"غير شامل", revenue:11274.77, expenses:0, profit:11274.77, admin:false},
+      {name:"CME1", code:"CME1", category:"إدارة أعمال", year:2024, paidStudents:5, freeStudents:0, examType:"غير شامل", revenue:3819.12, expenses:0, profit:3819.12, admin:false},
+      {name:"CBP-S", code:"CBP-S", category:"إدارة أعمال", year:2024, paidStudents:1, freeStudents:0, examType:"غير شامل", revenue:1493.91, expenses:3000, profit:-1506.09, admin:false},
+      {name:"COMPTIA A+", code:"COMPTIA A+", category:"تقنية معلومات", year:2024, paidStudents:21, freeStudents:0, examType:"غير شامل", revenue:25286.96, expenses:10500, profit:14786.96, admin:false},
+      {name:"IELTS", code:"IELTS", category:"—", year:2024, paidStudents:0, freeStudents:0, examType:"—", revenue:64305.17, expenses:5742, profit:58563.17, admin:true},
+      {name:"اكواد الطلاب", code:"ADMIN-CODES-2024", category:"إداري", year:2024, paidStudents:0, freeStudents:0, examType:"—", revenue:0, expenses:100189.34, profit:-100189.34, admin:true},
+      {name:"انسحاب الطلاب", code:"ADMIN-REFUNDS-2024", category:"إداري", year:2024, paidStudents:0, freeStudents:0, examType:"—", revenue:0, expenses:27463.13, profit:-27463.13, admin:true},
+
+      {name:"FE", code:"FE", category:"هندسة", year:2025, paidStudents:12, freeStudents:0, examType:"غير شامل", revenue:7182, expenses:0, profit:7182, admin:false},
+      {name:"CBP-LS", code:"CBP-LS", category:"إدارة أعمال", year:2025, paidStudents:62, freeStudents:0, examType:"شامل", revenue:53417, expenses:45923, profit:7506, admin:false},
+      {name:"CBP-PM", code:"CBP-PM", category:"إدارة مشاريع", year:2025, paidStudents:56, freeStudents:0, examType:"شامل", revenue:69719, expenses:51584, profit:18135, admin:false},
+      {name:"COMPTIA SE+", code:"COMPTIA SE+", category:"تقنية معلومات", year:2025, paidStudents:18, freeStudents:0, examType:"غير شامل", revenue:15299, expenses:10000, profit:5299, admin:false},
+      {name:"CBP-CT", code:"CBP-CT", category:"تقنية معلومات", year:2025, paidStudents:15, freeStudents:0, examType:"شامل", revenue:26448, expenses:20448, profit:6000, admin:false},
+      {name:"OSHA", code:"OSHA", category:"سلامة مهنية", year:2025, paidStudents:50, freeStudents:0, examType:"شامل", revenue:39525, expenses:27000, profit:12525, admin:false},
+      {name:"NEBOSH", code:"NEBOSH", category:"سلامة مهنية", year:2025, paidStudents:25, freeStudents:0, examType:"شامل", revenue:30233, expenses:15600, profit:14633, admin:false},
+      {name:"PMP", code:"PMP", category:"إدارة مشاريع", year:2025, paidStudents:19, freeStudents:0, examType:"غير شامل", revenue:14620, expenses:7000, profit:7620, admin:false},
+      {name:"MOS", code:"MOS", category:"تقنية معلومات", year:2025, paidStudents:5, freeStudents:0, examType:"شامل", revenue:10999, expenses:0, profit:10999, admin:false},
+      {name:"CBP-C", code:"CBP-C", category:"خدمة عملاء", year:2025, paidStudents:4, freeStudents:0, examType:"شامل", revenue:2457, expenses:2676, profit:-219, admin:false},
+      {name:"CBP-M", code:"CBP-M", category:"تسويق", year:2025, paidStudents:5, freeStudents:0, examType:"شامل", revenue:5313, expenses:5160, profit:153, admin:false},
+      {name:"CBP-S", code:"CBP-S", category:"مبيعات", year:2025, paidStudents:1, freeStudents:0, examType:"شامل", revenue:595, expenses:675, profit:-80, admin:false},
+
+      {name:"CBP-LS", code:"CBP-LS", category:"إدارة أعمال", year:2026, paidStudents:36, freeStudents:0, examType:"شامل", revenue:31374.07, expenses:30300, profit:1074.07, admin:false},
+      {name:"CBP-PM", code:"CBP-PM", category:"إدارة مشاريع", year:2026, paidStudents:19, freeStudents:0, examType:"شامل", revenue:42349.53, expenses:24608, profit:17741.53, admin:false},
+      {name:"NEBOSH", code:"NEBOSH", category:"سلامة مهنية", year:2026, paidStudents:13, freeStudents:0, examType:"شامل", revenue:22827, expenses:15600, profit:7227, admin:false}
+    ];
+
+    const DATA = RAW_DATA.map(row => ({
+      ...row,
+      category: normalizeCategory(row.category),
+      examType: normalizeExam(row.examType),
+      admin: row.admin || row.category === "—" || row.examType === "—"
+    }));
+
+    const YEARS = [2023, 2024, 2025, 2026];
+    const charts = {};
+    const nf = new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 });
+    const nf1 = new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 1 });
+    const sar = value => `${nf.format(Math.round(value || 0))} ر.س`;
+    const num = value => nf.format(Math.round(value || 0));
+    const pct = value => `${nf1.format(value || 0)}%`;
+
+    const palette = ["#d4a843", "#1a7f8e", "#27ae60", "#c0392b", "#8e44ad", "#f39c12", "#16a085", "#e67e22", "#3498db", "#e84393", "#2c3e50", "#95a5a6"];
+    const categoryColorMap = new Map();
+
+    function normalizeCategory(category) {
+      const c = String(category || "").trim();
+      const noSpace = c.replace(/\s+/g, " ");
+      const map = {
+        "ادارة اعمال": "إدارة أعمال",
+        "إدارة اعمال": "إدارة أعمال",
+        "إدارة أعمال": "إدارة أعمال",
+        "الادارة": "إدارة أعمال",
+        "ادارة مشاريع": "إدارة مشاريع",
+        "إدارة المشاريع": "إدارة مشاريع",
+        "ادارة المشاريع": "إدارة مشاريع",
+        "إدارة مشاريع": "إدارة مشاريع",
+        "السلامة المهنية": "سلامة مهنية",
+        "سلامة مهنية": "سلامة مهنية",
+        "تقنية معلومات": "تقنية معلومات",
+        "هندسة": "هندسة",
+        "محاسبة": "محاسبة",
+        "تسويق": "تسويق",
+        "مبيعات": "مبيعات",
+        "خدمة عملاء": "خدمة عملاء",
+        "تأمين": "تأمين",
+        "إداري": "إداري",
+        "—": "—"
+      };
+      return map[noSpace] || noSpace || "غير محدد";
+    }
+
+    function normalizeExam(examType) {
+      const e = String(examType || "").trim();
+      if (["شاملة", "شامل"].includes(e)) return "شامل";
+      if (e === "غير شامل") return "غير شامل";
+      return "—";
+    }
+
+    function getColorForCategory(category) {
+      if (!categoryColorMap.has(category)) {
+        categoryColorMap.set(category, palette[categoryColorMap.size % palette.length]);
+      }
+      return categoryColorMap.get(category);
+    }
+
+    function sum(rows, key) {
+      return rows.reduce((acc, row) => acc + (+row[key] || 0), 0);
+    }
+
+    function groupBy(rows, keyFn) {
+      return rows.reduce((acc, row) => {
+        const key = keyFn(row);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(row);
+        return acc;
+      }, {});
+    }
+
+    function aggregate(rows, keyFn) {
+      const grouped = groupBy(rows, keyFn);
+      return Object.entries(grouped).map(([key, items]) => ({
+        key,
+        rows: items,
+        revenue: sum(items, "revenue"),
+        expenses: sum(items, "expenses"),
+        profit: sum(items, "profit"),
+        paidStudents: sum(items, "paidStudents"),
+        freeStudents: sum(items, "freeStudents"),
+        totalStudents: sum(items, "paidStudents") + sum(items, "freeStudents"),
+        category: items[0]?.category || "غير محدد",
+        name: items[0]?.name || key
+      }));
+    }
+
+    function selectedYears() {
+      const all = document.getElementById("yearAll").checked;
+      if (all) return YEARS;
+      const values = [...document.querySelectorAll(".year-check:checked")].map(el => +el.value);
+      return values.length ? values : YEARS;
+    }
+
+    function filterRows(includeAdmin = true) {
+      const years = selectedYears();
+      const category = document.getElementById("categoryFilter").value;
+      const exam = document.getElementById("examFilter").value;
+      return DATA.filter(row => {
+        if (!includeAdmin && row.admin) return false;
+        if (!years.includes(row.year)) return false;
+        if (category !== "all" && row.category !== category) return false;
+        if (exam !== "all" && row.examType !== exam) return false;
+        return true;
+      });
+    }
+
+    function filterProgramRows() {
+      return filterRows(false);
+    }
+
+    function rowsForTrend(currentYear) {
+      const category = document.getElementById("categoryFilter").value;
+      const exam = document.getElementById("examFilter").value;
+      return DATA.filter(row => {
+        if (row.year !== currentYear) return false;
+        if (category !== "all" && row.category !== category) return false;
+        if (exam !== "all" && row.examType !== exam) return false;
+        return true;
+      });
+    }
+
+    function initCategoryFilter() {
+      const select = document.getElementById("categoryFilter");
+      const categories = [...new Set(DATA.filter(row => !row.admin).map(row => row.category))].sort((a,b) => a.localeCompare(b, "ar"));
+      for (const category of categories) {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+      }
+      categories.forEach(getColorForCategory);
+    }
+
+    function commonOptions(extra = {}) {
+      const textColor = getComputedStyle(document.body).getPropertyValue("--text").trim();
+      const muted = getComputedStyle(document.body).getPropertyValue("--muted").trim();
+      const border = getComputedStyle(document.body).getPropertyValue("--border").trim();
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 900, easing: "easeOutQuart" },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: muted,
+              font: { family: "Cairo", weight: "800" },
+              usePointStyle: true,
+              padding: 18
+            },
+            position: "bottom"
+          },
+          tooltip: {
+            rtl: true,
+            textDirection: "rtl",
+            titleFont: { family: "Cairo", weight: "900" },
+            bodyFont: { family: "Cairo", weight: "700" },
+            padding: 12,
+            callbacks: {
+              label: ctx => {
+                const value = ctx.parsed?.y ?? ctx.parsed?.x ?? ctx.raw ?? 0;
+                const label = ctx.dataset.label || "";
+                const isMoney = /إيراد|مصروف|ربح|هامش|Revenue|Expenses|Profit/.test(label);
+                return `${label}: ${isMoney ? sar(value) : num(value)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: muted, font: { family: "Cairo", weight: "800" } },
+            grid: { color: border }
+          },
+          y: {
+            ticks: { color: muted, font: { family: "Cairo", weight: "800" } },
+            grid: { color: border }
+          }
+        },
+        ...extra
+      };
+    }
+
+    function destroyChart(id) {
+      if (charts[id]) {
+        charts[id].destroy();
+        delete charts[id];
+      }
+    }
+
+    function makeChart(id, config) {
+      destroyChart(id);
+      const ctx = document.getElementById(id);
+      charts[id] = new Chart(ctx, config);
+    }
+
+    function setCaption(id, text) {
+      document.getElementById(id).textContent = text;
+    }
+
+    function updateKPIs(allRows, programRows) {
+      const kpiGrid = document.getElementById("kpiGrid");
+      const selected = selectedYears();
+      const maxYear = Math.max(...selected);
+      const prevYear = maxYear - 1;
+      const curRows = rowsForTrend(maxYear);
+      const prevRows = rowsForTrend(prevYear);
+
+      const metrics = [
+        {
+          label: "إجمالي الإيرادات",
+          value: sum(allRows, "revenue"),
+          formatter: sar,
+          trendCur: sum(curRows, "revenue"),
+          trendPrev: sum(prevRows, "revenue")
+        },
+        {
+          label: "إجمالي المصروفات",
+          value: sum(allRows, "expenses"),
+          formatter: sar,
+          trendCur: sum(curRows, "expenses"),
+          trendPrev: sum(prevRows, "expenses"),
+          invert: true
+        },
+        {
+          label: "صافي الربح / الخسارة",
+          value: sum(allRows, "profit"),
+          formatter: sar,
+          trendCur: sum(curRows, "profit"),
+          trendPrev: sum(prevRows, "profit"),
+          valueClass: sum(allRows, "profit") >= 0 ? "positive" : "negative"
+        },
+        {
+          label: "إجمالي المسجلين المدفوعين",
+          value: sum(programRows, "paidStudents"),
+          formatter: num,
+          trendCur: sum(curRows.filter(r => !r.admin), "paidStudents"),
+          trendPrev: sum(prevRows.filter(r => !r.admin), "paidStudents")
+        },
+        {
+          label: "إجمالي المسجلين المجانيين",
+          value: sum(programRows, "freeStudents"),
+          formatter: num,
+          trendCur: sum(curRows.filter(r => !r.admin), "freeStudents"),
+          trendPrev: sum(prevRows.filter(r => !r.admin), "freeStudents")
+        },
+        {
+          label: "عدد البرامج النشطة",
+          value: new Set(programRows.map(row => row.code)).size,
+          formatter: num,
+          trendCur: new Set(curRows.filter(r => !r.admin).map(r => r.code)).size,
+          trendPrev: new Set(prevRows.filter(r => !r.admin).map(r => r.code)).size
+        }
+      ];
+
+      kpiGrid.innerHTML = metrics.map(metric => {
+        const diff = metric.trendCur - metric.trendPrev;
+        const percent = metric.trendPrev ? (diff / Math.abs(metric.trendPrev)) * 100 : (metric.trendCur ? 100 : 0);
+        let isPositive = diff >= 0;
+        if (metric.invert) isPositive = diff <= 0;
+        const badgeClass = diff === 0 ? "" : isPositive ? "positive" : "negative";
+        const arrow = diff === 0 ? "ـ" : diff > 0 ? "▲" : "▼";
+        const trendText = prevRows.length ? `${arrow} ${pct(Math.abs(percent))} عن ${prevYear}` : "لا توجد سنة سابقة";
+        return `
+          <article class="kpi">
+            <div class="kpi-label">${metric.label}</div>
+            <div class="kpi-value ${metric.valueClass || ""}">${metric.formatter(metric.value)}</div>
+            <span class="kpi-badge ${badgeClass}">${trendText}</span>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderAnnualChart(allRows) {
+      const byYear = YEARS.map(year => {
+        const rows = allRows.filter(r => r.year === year);
+        return { year, revenue: sum(rows, "revenue"), expenses: sum(rows, "expenses"), profit: sum(rows, "profit") };
+      }).filter(item => selectedYears().includes(item.year));
+
+      makeChart("chartAnnual", {
+        type: "bar",
+        data: {
+          labels: byYear.map(d => d.year),
+          datasets: [
+            { label: "الإيرادات", data: byYear.map(d => d.revenue), backgroundColor: "#d4a843", borderRadius: 12 },
+            { label: "المصروفات", data: byYear.map(d => d.expenses), backgroundColor: "#1a7f8e", borderRadius: 12 },
+            { label: "صافي الربح", data: byYear.map(d => d.profit), type: "line", borderColor: "#27ae60", backgroundColor: "#27ae60", borderWidth: 3, pointRadius: 5, pointBackgroundColor: byYear.map(d => d.profit < 0 ? "#c0392b" : "#27ae60"), tension: .35 }
+          ]
+        },
+        options: commonOptions({
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${sar(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: { ...commonOptions().scales.x },
+            y: { ...commonOptions().scales.y, ticks: { ...commonOptions().scales.y.ticks, callback: v => sar(v).replace(" ر.س","") } }
+          }
+        })
+      });
+
+      const topYear = byYear.reduce((a,b) => b.revenue > a.revenue ? b : a, byYear[0] || {year:"—", revenue:0});
+      setCaption("capAnnual", `أعلى سنة من حيث الإيرادات هي ${topYear.year} بقيمة ${sar(topYear.revenue)}، مع احتساب البنود الإدارية ضمن الإجمالي المالي.`);
+    }
+
+    function renderCategoryChart(programRows) {
+      const agg = aggregate(programRows, r => r.category).filter(d => d.revenue !== 0).sort((a,b) => b.revenue - a.revenue);
+      makeChart("chartCategory", {
+        type: "doughnut",
+        data: {
+          labels: agg.map(d => d.key),
+          datasets: [{ data: agg.map(d => d.revenue), backgroundColor: agg.map(d => getColorForCategory(d.key)), borderWidth: 0, hoverOffset: 8 }]
+        },
+        options: commonOptions({
+          cutout: "62%",
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: {
+                label: ctx => {
+                  const total = ctx.dataset.data.reduce((a,b) => a + b, 0);
+                  const value = ctx.raw || 0;
+                  return `${ctx.label}: ${sar(value)} (${pct(total ? value / total * 100 : 0)})`;
+                }
+              }
+            }
+          }
+        })
+      });
+      const top = agg[0] || {key:"—", revenue:0};
+      setCaption("capCategory", `أكبر مساهمة إيرادية حسب الفئة: ${top.key} بقيمة ${sar(top.revenue)}.`);
+    }
+
+    function renderTopRevenue(programRows) {
+      const agg = aggregate(programRows, r => r.code).sort((a,b) => b.revenue - a.revenue).slice(0, 10).reverse();
+      makeChart("chartTopRevenue", {
+        type: "bar",
+        data: {
+          labels: agg.map(d => d.key),
+          datasets: [{
+            label: "إجمالي الإيراد",
+            data: agg.map(d => d.revenue),
+            backgroundColor: agg.map(d => getColorForCategory(d.category)),
+            borderRadius: 12
+          }]
+        },
+        options: commonOptions({
+          indexAxis: "y",
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: {
+                label: ctx => {
+                  const item = agg[ctx.dataIndex];
+                  return [`الإيراد: ${sar(item.revenue)}`, `المصروفات: ${sar(item.expenses)}`, `الربح/الخسارة: ${sar(item.profit)}`, `المسجلون: ${num(item.totalStudents)}`];
+                }
+              }
+            }
+          },
+          scales: {
+            x: { ...commonOptions().scales.x, ticks: { ...commonOptions().scales.x.ticks, callback: v => sar(v).replace(" ر.س","") } },
+            y: { ...commonOptions().scales.y }
+          }
+        })
+      });
+      const top = [...agg].sort((a,b) => b.revenue - a.revenue)[0] || {key:"—", revenue:0};
+      setCaption("capTopRevenue", `أعلى إيراد على مستوى البرامج: ${top.key} بقيمة ${sar(top.revenue)}.`);
+    }
+
+    function renderEnrollment(programRows) {
+      const byYear = selectedYears().map(year => {
+        const rows = programRows.filter(r => r.year === year);
+        return { year, paid: sum(rows, "paidStudents"), free: sum(rows, "freeStudents") };
+      });
+      makeChart("chartEnrollment", {
+        type: "line",
+        data: {
+          labels: byYear.map(d => d.year),
+          datasets: [
+            { label: "مسجلون مدفوعون", data: byYear.map(d => d.paid), borderColor: "#d4a843", backgroundColor: "rgba(212,168,67,0.24)", fill: true, tension: .35, pointRadius: 5, stack: "students" },
+            { label: "مسجلون مجانيون", data: byYear.map(d => d.free), borderColor: "#1a7f8e", backgroundColor: "rgba(26,127,142,0.24)", fill: true, tension: .35, pointRadius: 5, stack: "students" }
+          ]
+        },
+        options: commonOptions({
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: {
+                afterBody: items => {
+                  const index = items[0].dataIndex;
+                  const total = byYear[index].paid + byYear[index].free;
+                  return `الإجمالي: ${num(total)} مسجل`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { ...commonOptions().scales.x },
+            y: { ...commonOptions().scales.y, stacked: true, beginAtZero: true }
+          }
+        })
+      });
+      const top = byYear.reduce((a,b) => (b.paid + b.free) > (a.paid + a.free) ? b : a, byYear[0] || {year:"—", paid:0, free:0});
+      setCaption("capEnrollment", `أعلى سنة في التسجيل هي ${top.year} بإجمالي ${num(top.paid + top.free)} مسجل.`);
+    }
+
+    function renderProfitByProgram(programRows) {
+      const agg = aggregate(programRows, r => r.code).sort((a,b) => b.profit - a.profit);
+      const display = agg.slice(0, 22).reverse();
+      makeChart("chartProfitByProgram", {
+        type: "bar",
+        data: {
+          labels: display.map(d => d.key),
+          datasets: [{
+            label: "هامش الربح/الخسارة",
+            data: display.map(d => d.profit),
+            backgroundColor: display.map(d => d.profit >= 0 ? "#27ae60" : "#c0392b"),
+            borderRadius: 10
+          }]
+        },
+        options: commonOptions({
+          indexAxis: "y",
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: {
+                label: ctx => {
+                  const item = display[ctx.dataIndex];
+                  return [`الهامش: ${sar(item.profit)}`, `الإيراد: ${sar(item.revenue)}`, `المصروفات: ${sar(item.expenses)}`, `المسجلون: ${num(item.totalStudents)}`];
+                }
+              }
+            }
+          },
+          scales: {
+            x: { ...commonOptions().scales.x, ticks: { ...commonOptions().scales.x.ticks, callback: v => sar(v).replace(" ر.س","") } },
+            y: { ...commonOptions().scales.y }
+          }
+        })
+      });
+      const best = agg[0] || {key:"—", profit:0};
+      const worst = agg[agg.length - 1] || {key:"—", profit:0};
+      setCaption("capProfitByProgram", `أفضل هامش: ${best.key} بقيمة ${sar(best.profit)}، وأكبر تحدٍ ربحي: ${worst.key} بقيمة ${sar(worst.profit)}.`);
+    }
+
+    function renderExamCompare(programRows) {
+      const years = selectedYears();
+      const inclusiveRevenue = years.map(year => sum(programRows.filter(r => r.year === year && r.examType === "شامل"), "revenue"));
+      const exclusiveRevenue = years.map(year => sum(programRows.filter(r => r.year === year && r.examType === "غير شامل"), "revenue"));
+      const inclusiveStudents = years.map(year => {
+        const rows = programRows.filter(r => r.year === year && r.examType === "شامل");
+        return sum(rows, "paidStudents") + sum(rows, "freeStudents");
+      });
+      const exclusiveStudents = years.map(year => {
+        const rows = programRows.filter(r => r.year === year && r.examType === "غير شامل");
+        return sum(rows, "paidStudents") + sum(rows, "freeStudents");
+      });
+
+      makeChart("chartExamCompare", {
+        type: "bar",
+        data: {
+          labels: years,
+          datasets: [
+            { label: "إيراد شامل", data: inclusiveRevenue, backgroundColor: "#d4a843", borderRadius: 10, yAxisID: "y" },
+            { label: "إيراد غير شامل", data: exclusiveRevenue, backgroundColor: "#1a7f8e", borderRadius: 10, yAxisID: "y" },
+            { label: "طلاب شامل", data: inclusiveStudents, backgroundColor: "rgba(39,174,96,0.70)", borderRadius: 10, yAxisID: "y1" },
+            { label: "طلاب غير شامل", data: exclusiveStudents, backgroundColor: "rgba(192,57,43,0.70)", borderRadius: 10, yAxisID: "y1" }
+          ]
+        },
+        options: commonOptions({
+          scales: {
+            x: { ...commonOptions().scales.x },
+            y: { ...commonOptions().scales.y, position: "left", title: { display: true, text: "ريال", color: getComputedStyle(document.body).getPropertyValue("--muted").trim(), font: { family: "Cairo", weight: "900" } }, ticks: { ...commonOptions().scales.y.ticks, callback: v => sar(v).replace(" ر.س","") } },
+            y1: { ...commonOptions().scales.y, position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "طلاب", color: getComputedStyle(document.body).getPropertyValue("--muted").trim(), font: { family: "Cairo", weight: "900" } } }
+          }
+        })
+      });
+      const totalInc = inclusiveRevenue.reduce((a,b)=>a+b,0);
+      const totalExc = exclusiveRevenue.reduce((a,b)=>a+b,0);
+      setCaption("capExamCompare", `البرامج ${totalInc >= totalExc ? "الشاملة" : "غير الشاملة"} تحقق الإيراد الأعلى بإجمالي ${sar(Math.max(totalInc, totalExc))}.`);
+    }
+
+    function renderWinLoss(programRows) {
+      const agg = aggregate(programRows, r => `${r.code}__${r.year}`);
+      const winners = agg.filter(d => d.profit >= 0).length;
+      const losers = agg.filter(d => d.profit < 0).length;
+      makeChart("chartWinLoss", {
+        type: "doughnut",
+        data: {
+          labels: [`برامج رابحة (${winners})`, `برامج خاسرة (${losers})`],
+          datasets: [{ data: [winners, losers], backgroundColor: ["#27ae60", "#c0392b"], borderWidth: 0, hoverOffset: 8 }]
+        },
+        options: commonOptions({
+          cutout: "62%",
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: { label: ctx => `${ctx.label}: ${num(ctx.raw)} برنامج` }
+            }
+          }
+        })
+      });
+      const total = winners + losers;
+      setCaption("capWinLoss", `نسبة البرامج الرابحة ${pct(total ? winners / total * 100 : 0)} مقابل ${pct(total ? losers / total * 100 : 0)} للبرامج الخاسرة.`);
+    }
+
+    function renderHeatmap(programRows) {
+      const years = selectedYears();
+      const agg = aggregate(programRows, r => r.code).sort((a,b) => b.revenue - a.revenue).slice(0, 18);
+      const maxValue = Math.max(1, ...programRows.map(r => r.revenue));
+      const rowsHtml = agg.map(item => {
+        const cells = years.map(year => {
+          const revenue = sum(programRows.filter(r => r.code === item.key && r.year === year), "revenue");
+          const opacity = Math.max(0.06, revenue / maxValue);
+          const textColor = opacity > .55 ? "#111b32" : getComputedStyle(document.body).getPropertyValue("--text").trim();
+          return `<td title="${item.key} / ${year} / ${sar(revenue)}" style="background: rgba(212,168,67,${opacity}); color:${textColor};">${revenue ? sar(revenue) : "—"}</td>`;
+        }).join("");
+        return `<tr><td>${item.key}</td>${cells}</tr>`;
+      }).join("");
+
+      document.getElementById("heatmapTable").innerHTML = programRows.length ? `
+        <table class="heatmap" aria-label="الإيرادات حسب البرنامج والسنة">
+          <thead><tr><th>البرنامج</th>${years.map(year => `<th>${year}</th>`).join("")}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      ` : `<div class="empty-state">لا توجد بيانات مطابقة للفلاتر الحالية</div>`;
+
+      const bestCell = programRows.reduce((a,b) => b.revenue > a.revenue ? b : a, programRows[0] || {code:"—", year:"—", revenue:0});
+      setCaption("capHeatmap", `أعلى خلية إيراد في الجدول: ${bestCell.code} في ${bestCell.year} بقيمة ${sar(bestCell.revenue)}.`);
+    }
+
+    function renderGrowth(programRows) {
+      const years = selectedYears().sort();
+      const categories = [...new Set(programRows.map(r => r.category))].sort((a,b) => a.localeCompare(b, "ar"));
+      const datasets = categories.map(category => {
+        const values = years.map((year, idx) => {
+          if (idx === 0) return null;
+          const prev = sum(programRows.filter(r => r.category === category && r.year === years[idx - 1]), "revenue");
+          const cur = sum(programRows.filter(r => r.category === category && r.year === year), "revenue");
+          if (!prev) return null;
+          return ((cur - prev) / Math.abs(prev)) * 100;
+        });
+        return {
+          label: category,
+          data: values,
+          borderColor: getColorForCategory(category),
+          backgroundColor: getColorForCategory(category),
+          tension: .35,
+          pointRadius: 5,
+          spanGaps: true
+        };
+      });
+
+      makeChart("chartGrowth", {
+        type: "line",
+        data: { labels: years, datasets },
+        options: commonOptions({
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw === null ? "لا يوجد أساس مقارنة" : pct(ctx.raw)}` }
+            }
+          },
+          scales: {
+            x: { ...commonOptions().scales.x },
+            y: { ...commonOptions().scales.y, ticks: { ...commonOptions().scales.y.ticks, callback: v => `${v}%` } }
+          }
+        })
+      });
+
+      const allGrowth = [];
+      categories.forEach(category => {
+        years.forEach((year, idx) => {
+          if (idx === 0) return;
+          const prev = sum(programRows.filter(r => r.category === category && r.year === years[idx - 1]), "revenue");
+          const cur = sum(programRows.filter(r => r.category === category && r.year === year), "revenue");
+          if (prev) allGrowth.push({category, year, growth: ((cur - prev) / Math.abs(prev)) * 100});
+        });
+      });
+      const top = allGrowth.reduce((a,b) => b.growth > a.growth ? b : a, allGrowth[0] || {category:"—", year:"—", growth:0});
+      setCaption("capGrowth", `أعلى نمو سنوي ظاهر: ${top.category} في ${top.year} بنسبة ${pct(top.growth)}.`);
+    }
+
+    function renderBestWorst(programRows) {
+      const agg = aggregate(programRows, r => r.code).sort((a,b) => b.profit - a.profit);
+      const top = agg.slice(0, 5);
+      const bottom = agg.slice(-5).sort((a,b) => a.profit - b.profit);
+      const combined = [...bottom, ...top];
+      makeChart("chartBestWorst", {
+        type: "bar",
+        data: {
+          labels: combined.map(d => d.key),
+          datasets: [{
+            label: "هامش الربح/الخسارة",
+            data: combined.map(d => d.profit),
+            backgroundColor: combined.map(d => d.profit >= 0 ? "#27ae60" : "#c0392b"),
+            borderRadius: 12
+          }]
+        },
+        options: commonOptions({
+          indexAxis: "y",
+          plugins: {
+            ...commonOptions().plugins,
+            tooltip: {
+              ...commonOptions().plugins.tooltip,
+              callbacks: { label: ctx => `${combined[ctx.dataIndex].key}: ${sar(ctx.raw)}` }
+            }
+          },
+          scales: {
+            x: { ...commonOptions().scales.x, ticks: { ...commonOptions().scales.x.ticks, callback: v => sar(v).replace(" ر.س","") } },
+            y: { ...commonOptions().scales.y }
+          }
+        })
+      });
+      const best = top[0] || {key:"—", profit:0};
+      const worst = bottom[0] || {key:"—", profit:0};
+      setCaption("capBestWorst", `البطل الربحي هو ${best.key} بقيمة ${sar(best.profit)}، وأكبر تحدي هو ${worst.key} بقيمة ${sar(worst.profit)}.`);
+    }
+
+    function renderInsights(allRows, programRows) {
+      const insights = document.getElementById("insightsList");
+      if (!programRows.length) {
+        insights.innerHTML = "<li>لا توجد بيانات برامج مطابقة للفلاتر الحالية.</li>";
+        document.getElementById("dataNote").textContent = "";
+        return;
+      }
+
+      const byProgram = aggregate(programRows, r => r.code).sort((a,b) => b.profit - a.profit);
+      const best = byProgram[0];
+      const worst = byProgram[byProgram.length - 1];
+
+      const byYear = selectedYears().map(year => {
+        const rows = allRows.filter(r => r.year === year);
+        return { year, revenue: sum(rows, "revenue"), profit: sum(rows, "profit"), expenses: sum(rows, "expenses") };
+      });
+      const topYear = byYear.reduce((a,b) => b.revenue > a.revenue ? b : a, byYear[0]);
+
+      const byCategoryEnrollment = aggregate(programRows, r => r.category).sort((a,b) => b.totalStudents - a.totalStudents);
+      const topCategoryStudents = byCategoryEnrollment[0];
+
+      const sortedYears = byYear.filter(d => d.revenue || d.expenses || d.profit).sort((a,b) => a.year - b.year);
+      let trend = "لا يمكن تحديد اتجاه واضح بسبب محدودية السنوات المختارة";
+      if (sortedYears.length >= 2) {
+        const first = sortedYears[0].profit;
+        const last = sortedYears[sortedYears.length - 1].profit;
+        trend = last > first ? "اتجاه الربحية يتحسن مقارنة ببداية الفترة المختارة" : last < first ? "اتجاه الربحية يتراجع مقارنة ببداية الفترة المختارة" : "اتجاه الربحية مستقر تقريبًا";
+      }
+
+      const totalRevenue = sum(allRows, "revenue");
+      const totalExpenses = sum(allRows, "expenses");
+      const net = sum(allRows, "profit");
+      const margin = totalRevenue ? (net / totalRevenue) * 100 : 0;
+
+      insights.innerHTML = [
+        `أكثر برنامج ربحية في نطاق الفلاتر هو <strong>${best.key}</strong> بصافي ${sar(best.profit)}.`,
+        `أكبر برنامج خاسر أو الأقل ربحية هو <strong>${worst.key}</strong> بقيمة ${sar(worst.profit)}.`,
+        `السنة الأعلى إيرادًا هي <strong>${topYear.year}</strong> بإجمالي ${sar(topYear.revenue)}.`,
+        `الفئة الأعلى في إجمالي المسجلين هي <strong>${topCategoryStudents.key}</strong> بإجمالي ${num(topCategoryStudents.totalStudents)} مسجل.`,
+        `${trend}.`,
+        `صافي المركز بعد البنود الإدارية ضمن الفلاتر الحالية هو <strong class="${net >= 0 ? "positive" : "negative"}">${sar(net)}</strong>، بهامش تقريبي ${pct(margin)} من الإيرادات.`
+      ].map(item => `<li>${item}</li>`).join("");
+
+      const adminRows = allRows.filter(r => r.admin);
+      const adminExpenses = sum(adminRows, "expenses");
+      const adminRevenue = sum(adminRows, "revenue");
+      document.getElementById("dataNote").textContent = `ملاحظة: تم استبعاد البنود الإدارية والصفوف ذات الفئة غير المحددة من رسوم البرامج، وتم إدراجها في الإجماليات المالية. إجمالي إيراداتها ${sar(adminRevenue)} ومصروفاتها ${sar(adminExpenses)} ضمن الفلاتر الحالية.`;
+    }
+
+    function updateDashboard() {
+      const allRows = filterRows(true);
+      const programRows = filterProgramRows();
+
+      updateKPIs(allRows, programRows);
+      renderAnnualChart(allRows);
+      renderCategoryChart(programRows);
+      renderTopRevenue(programRows);
+      renderEnrollment(programRows);
+      renderProfitByProgram(programRows);
+      renderExamCompare(programRows);
+      renderWinLoss(programRows);
+      renderHeatmap(programRows);
+      renderGrowth(programRows);
+      renderBestWorst(programRows);
+      renderInsights(allRows, programRows);
+    }
+
+    function wireEvents() {
+      const yearAll = document.getElementById("yearAll");
+      const yearChecks = [...document.querySelectorAll(".year-check")];
+
+      yearAll.addEventListener("change", () => {
+        if (yearAll.checked) {
+          yearChecks.forEach(check => check.checked = false);
+        }
+        updateDashboard();
+      });
+
+      yearChecks.forEach(check => {
+        check.addEventListener("change", () => {
+          if (check.checked) yearAll.checked = false;
+          if (!yearChecks.some(c => c.checked)) yearAll.checked = true;
+          updateDashboard();
+        });
+      });
+
+      document.getElementById("categoryFilter").addEventListener("change", updateDashboard);
+      document.getElementById("examFilter").addEventListener("change", updateDashboard);
+
+      document.getElementById("themeToggle").addEventListener("click", () => {
+        document.body.classList.toggle("light-mode");
+        document.getElementById("themeToggle").textContent = document.body.classList.contains("light-mode") ? "الوضع الداكن" : "الوضع الفاتح";
+        updateDashboard();
+      });
+
+      document.getElementById("printBtn").addEventListener("click", () => window.print());
+    }
+
+    initCategoryFilter();
+    wireEvents();
+    updateDashboard();
+  </script>
+</body>
+</html>
